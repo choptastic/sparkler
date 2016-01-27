@@ -1,0 +1,7 @@
+{application, mindrill, [
+    {description,  "Ultra-Minimal Mandrill API"},
+    {vsn,          "0.1.0"},
+    {applications, [kernel, stdlib, ibrowse]},
+    {registered,   []},
+    {mod,          {mindrill_app, []}}
+]}.
