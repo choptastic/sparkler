@@ -144,7 +144,7 @@ make_json({FromName,FromEmail}, {ToName,ToEmail}, Subject, Data, _Headers) ->
 			]}
 		]}
 	],
-	mochijson2:encode(Proplist).
+	jsx:encode(Proplist).
 
 
 fix_floating_linefeeds([]) ->
