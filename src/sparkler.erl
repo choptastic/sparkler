@@ -1,4 +1,4 @@
--module(mindrill).
+-module(sparkler).
 -behaviour(gen_server).
 
 -define(TIMEOUT,get_env(timeout, 300)).
@@ -26,7 +26,7 @@
 -record(data,{queue}).
 
 get_env(Key, Default) ->
-	case application:get_env(mindrill, Key) of
+	case application:get_env(sparkler, Key) of
 		undefined -> Default;
 		{ok, Val} -> Val
 	end.

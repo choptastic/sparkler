@@ -1,4 +1,4 @@
--module(mindrill_sup).
+-module(sparkler_sup).
 
 -behaviour(supervisor).
 
@@ -21,7 +21,7 @@ init([]) ->
 	Shutdown = 2000,
 	Type = worker,
 
-	AChild = {mindrill, {mindrill, start_link, []},
-					  Restart, Shutdown, Type, [mindrill]},
+	AChild = {sparkler, {sparkler, start_link, []},
+					  Restart, Shutdown, Type, [sparkler]},
 
 	{ok, {SupFlags, [AChild]}}.

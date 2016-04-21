@@ -1,7 +1,7 @@
-{application, mindrill, [
-    {description,  "Ultra-Minimal Mandrill API"},
+{application, sparkler, [
+    {description,  "Ultra-Minimal Sparkler API"},
     {vsn,          "0.1.0"},
     {applications, [kernel, stdlib, ibrowse]},
     {registered,   []},
-    {mod,          {mindrill_app, []}}
+    {mod,          {sparkler_app, []}}
 ]}.
