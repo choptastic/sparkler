@@ -1,7 +1,7 @@
 all: get-deps compile
 
 get-deps:
-	./rebar get-deps
+	./rebar3 deps
 
 compile:
-	./rebar compile
+	./rebar3 compile
