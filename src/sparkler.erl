@@ -131,18 +131,16 @@ int_send(Server,Port,From,To,Subject,Data,Headers) ->
 	int_send(5,Server,Port,From,To,Subject,Data,Headers).
 
 make_json({FromName,FromEmail}, {ToName,ToEmail}, Subject, Data, _Headers) ->
+    ReplyToHeader = [], %% need to do reply-to properly
 	Proplist = [
-		{key, ?API_KEY},
-		{message, [
+		{content, [
 			{text, i2b(Data)},
 			{subject, i2b(Subject)},
-			%{headers, Headers},
-			{from_email, i2b(FromEmail)},
-			{from_name, i2b(FromName)},
-			{to,[
-				[{email,i2b(ToEmail)},{name,i2b(ToName)}]
-			]}
-		]}
+            {from, [{email, i2b(FromEmail)}, {name, i2b(FromName)}]}
+        ] ++ ReplyToHeader},
+        {recipients,[
+            [{address, [{email,i2b(ToEmail)},{name,i2b(ToName)}]}]
+        ]}
 	],
 	jsx:encode(Proplist).
 
