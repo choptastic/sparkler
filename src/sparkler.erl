@@ -140,7 +140,8 @@ make_json({FromName,FromEmail}, {ToName,ToEmail}, Subject, Data, _Headers) ->
         ] ++ ReplyToHeader},
         {recipients,[
             [{address, [{email,i2b(ToEmail)},{name,i2b(ToName)}]}]
-        ]}
+        ]},
+        {options, [{click_tracking, false}]}
 	],
 	jsx:encode(Proplist).
 
