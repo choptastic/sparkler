@@ -3,7 +3,7 @@
 
 -define(TIMEOUT,get_env(timeout, 300)).
 -define(API_KEY, get_env(api_key, "")).
--define(API_PREFIX,get_env(api_prefix, "https://mandrillapp.com/api/1.0/")).
+-define(API_PREFIX,get_env(api_prefix, "https://api.sparkpost.com/api/v1/")).
 -define(HTTP_OPTIONS, []).
 -define(OPTIONS, [{full_result,false}]).
 
@@ -120,7 +120,7 @@ int_send(TryNum,_APIKey,Prefix,From,To,Subject,Data,Headers) when TryNum > 0 ->
 	URL = Prefix ++ "messages/send.json",
 	EncodedJson = make_json(From, To, Subject, Data, Headers),
 	Body = iolist_to_binary(EncodedJson),
-	case ibrowse:send_req(URL,[],post,Body) of
+	case ibrowse:send_req(URL,[{authorization, ?API_KEY}],post,Body,[{content_type,"application/json"}]) of
 		{ok, _, _, _Result} -> 
 			do_nothing;
 		{error, Reason} -> 
