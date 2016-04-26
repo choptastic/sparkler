@@ -123,7 +123,6 @@ int_send(TryNum,_APIKey,Prefix,From,To,Subject,Data,Headers) when TryNum > 0 ->
 	URL = Prefix ++ "transmissions",
 	EncodedJson = make_json(From, To, Subject, Data, Headers),
 	Body = iolist_to_binary(EncodedJson),
-    error_logger:info_msg("Sending: ~nAPI KEY: ~s~nURL: ~s~nMessage: ~s~n",[?API_KEY, URL, Body]),
 	case ibrowse:send_req(URL,[{authorization, ?API_KEY}],post,Body,[{content_type,"application/json"}]) of
 		{ok, _, _, Result} -> 
             error_logger:info_msg("Sent: ~p~n",[Result]),
@@ -135,8 +134,12 @@ int_send(TryNum,_APIKey,Prefix,From,To,Subject,Data,Headers) when TryNum > 0 ->
 int_send(Server,Port,From,To,Subject,Data,Headers) ->
 	int_send(5,Server,Port,From,To,Subject,Data,Headers).
 
-make_json(From, To, Subject, Data, _Headers) ->
-    ReplyToHeader = [], %% need to do reply-to properly
+make_json(From, To, Subject, Data, Headers) ->
+    {_Headers2, ReplyTo} = extract_reply_to(Headers),
+    ReplyToOption = case ReplyTo of
+        undefined -> [];
+        _ -> [{reply_to, ReplyTo}]
+    end,
     {FromName, FromEmail} = normalize_email_name(From),
     {ToName, ToEmail} = normalize_email_name(To),
 	Proplist = [
@@ -144,13 +147,28 @@ make_json(From, To, Subject, Data, _Headers) ->
 			{text, i2b(Data)},
 			{subject, i2b(Subject)},
             {from, [{email, i2b(FromEmail)}, {name, i2b(FromName)}]}
-        ] ++ ReplyToHeader},
+        ] ++ ReplyToOption},
         {recipients,[
             [{address, [{email,i2b(ToEmail)},{name,i2b(ToName)}]}]
         ]},
         {options, [{click_tracking, false}]}
 	],
 	jsx:encode(Proplist).
+
+extract_reply_to(Headers) ->
+    lists:foldl(fun({K,V}, {HeaderAcc, ReplyTo}) ->
+        case normalized_header(K) == "replyto" of
+            true -> {HeaderAcc, V};
+            false -> {[{K,V}|HeaderAcc], ReplyTo}
+        end
+    end, {[], undefined}, Headers).
+        
+
+normalized_header(H) when is_atom(H) ->
+    normalized_header(atom_to_list(H));
+normalized_header(H) when is_list(H) ->
+    H2 = re:replace(H, "[^a-zA-Z0-9]", "", [{return, list}]),
+    string:to_lower(H2).
 
 normalize_email_name({FromName, FromEmail}) ->
     {FromName, FromEmail};
