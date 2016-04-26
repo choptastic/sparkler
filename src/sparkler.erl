@@ -123,6 +123,7 @@ int_send(TryNum,_APIKey,Prefix,From,To,Subject,Data,Headers) when TryNum > 0 ->
 	URL = Prefix ++ "transmissions",
 	EncodedJson = make_json(From, To, Subject, Data, Headers),
 	Body = iolist_to_binary(EncodedJson),
+    error_logger:info_msg("Sending: ~nAPI KEY: ~s~nURL: ~s~nMessage: ~s~n",[?API_KEY, URL, Body]),
 	case ibrowse:send_req(URL,[{authorization, ?API_KEY}],post,Body,[{content_type,"application/json"}]) of
 		{ok, _, _, Result} -> 
             error_logger:info_msg("Sent: ~p~n",[Result]),
