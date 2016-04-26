@@ -139,7 +139,7 @@ make_json(From, To, Subject, Data, Headers) ->
     {_Headers2, ReplyTo} = extract_reply_to(Headers),
     ReplyToOption = case ReplyTo of
         undefined -> [];
-        _ -> [{reply_to, ReplyTo}]
+        _ -> [{reply_to, i2b(ReplyTo)}]
     end,
     {FromName, FromEmail} = normalize_email_name(From),
     {ToName, ToEmail} = normalize_email_name(To),
