@@ -1,6 +1,8 @@
 -module(sparkler).
 -behaviour(gen_server).
 
+-compile(export_all).
+
 -define(TIMEOUT,get_env(timeout, 300)).
 -define(API_KEY, get_env(api_key, "")).
 -define(API_PREFIX,get_env(api_prefix, "https://api.sparkpost.com/api/v1/")).
@@ -18,6 +20,7 @@
 		 status/0,
 		 code_change/3
 		]).
+
 
 -export([send/4,send/5]).
 -export([fix_floating_linefeeds/1]).
@@ -117,11 +120,13 @@ int_send(0,APIKey,Prefix,From,To,Sub,_Data,_Headers) ->
 		{subject,Sub}
 	]);
 int_send(TryNum,_APIKey,Prefix,From,To,Subject,Data,Headers) when TryNum > 0 ->
-	URL = Prefix ++ "messages/send.json",
+	URL = Prefix ++ "transmissions",
 	EncodedJson = make_json(From, To, Subject, Data, Headers),
 	Body = iolist_to_binary(EncodedJson),
+    error_logger:info_msg("Sending: ~nAPI KEY: ~s~nURL: ~s~nMessage: ~s~n",[?API_KEY, URL, Body]),
 	case ibrowse:send_req(URL,[{authorization, ?API_KEY}],post,Body,[{content_type,"application/json"}]) of
-		{ok, _, _, _Result} -> 
+		{ok, _, _, Result} -> 
+            error_logger:info_msg("Sent: ~p~n",[Result]),
 			do_nothing;
 		{error, Reason} -> 
 			error_logger:info_msg("Error In Send: ~p~n",[Reason])
@@ -130,8 +135,10 @@ int_send(TryNum,_APIKey,Prefix,From,To,Subject,Data,Headers) when TryNum > 0 ->
 int_send(Server,Port,From,To,Subject,Data,Headers) ->
 	int_send(5,Server,Port,From,To,Subject,Data,Headers).
 
-make_json({FromName,FromEmail}, {ToName,ToEmail}, Subject, Data, _Headers) ->
+make_json(From, To, Subject, Data, _Headers) ->
     ReplyToHeader = [], %% need to do reply-to properly
+    {FromName, FromEmail} = normalize_email_name(From),
+    {ToName, ToEmail} = normalize_email_name(To),
 	Proplist = [
 		{content, [
 			{text, i2b(Data)},
@@ -145,6 +152,13 @@ make_json({FromName,FromEmail}, {ToName,ToEmail}, Subject, Data, _Headers) ->
 	],
 	jsx:encode(Proplist).
 
+normalize_email_name({FromName, FromEmail}) ->
+    {FromName, FromEmail};
+normalize_email_name(EmailString) ->
+    case re:run(EmailString, "^\"(.*)\"\s*<(.*@.*)>$", [{capture, all_but_first, list}]) of
+        {match, [Name, Email]} -> {Email, Name};
+        nomatch -> {EmailString, EmailString}
+    end.
 
 fix_floating_linefeeds([]) ->
 	[];
