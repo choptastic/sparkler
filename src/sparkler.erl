@@ -25,7 +25,7 @@
 -export([send/4,send/5]).
 -export([fix_floating_linefeeds/1]).
 
--record(mail,{from,to,subject,data,headers}).
+-record(mail,{from,to,subject,text,html,headers}).
 -record(data,{queue}).
 
 get_env(Key, Default) ->
@@ -34,18 +34,22 @@ get_env(Key, Default) ->
 		{ok, Val} -> Val
 	end.
 
-send(From,To,Subject,Data,Headers) ->
+send(From,To,Subject,Text,Html,Headers) ->
 	Mail = #mail{
 		to=To,
 		from=From,
 		subject=Subject,
-		data=Data,
+		text=Text,
+		html=Html,
 		headers=Headers
 	},
 	gen_server:call(?MODULE,{queue,Mail}).
 
-send(From,To,Subject,Data) ->
-	send(From,To,Subject,Data,[]).
+send(From,To,Subject,Text) ->
+	send(From,To,Subject,Text,[],[]).
+
+send(From,To,Subject,Text,Html) ->
+	send(From,To,Subject,Text,Html,[]).
 
 start_link() ->
 	gen_server:start_link({local,?MODULE},?MODULE,#data{},[]).
@@ -87,12 +91,13 @@ handle_info(timeout,#data{queue=Queue} = Data) ->
 				from=From,
 				to=To,
 				subject=Subject,
-				data=Body,
+				text=Text,
+				html=Html,
 				headers=Headers
 			} = Mail,
 			spawn(fun() ->
 				try
-					int_send(?API_KEY,?API_PREFIX,From,To,Subject,Body,Headers)
+					int_send(?API_KEY,?API_PREFIX,From,To,Subject,Text,Html,Headers)
 				catch E:T ->
 					error_logger:error_msg("~p:~p~n~p~n",[E,T,erlang:get_stacktrace()])
 				end
@@ -100,7 +105,7 @@ handle_info(timeout,#data{queue=Queue} = Data) ->
 			NQ;
 		{empty,Queue} ->
 			Queue
-	end,	
+	end,
 	{noreply,Data#data{queue=NewQueue},?TIMEOUT}.
 
 handle_cast(_Msg, State) ->
@@ -110,7 +115,7 @@ code_change(_OldVsn, State, _Extra) ->
 	{ok, State}.
 
 %% Headers is a proplist of {header,value}
-int_send(0,APIKey,Prefix,From,To,Sub,_Data,_Headers) ->
+int_send(0,APIKey,Prefix,From,To,Sub,_Text,_Html,_Headers) ->
 	error_logger:error_report([
 		failed_send,
 		{api_key,APIKey},
@@ -119,36 +124,40 @@ int_send(0,APIKey,Prefix,From,To,Sub,_Data,_Headers) ->
 		{to,To},
 		{subject,Sub}
 	]);
-int_send(TryNum,_APIKey,Prefix,From,To,Subject,Data,Headers) when TryNum > 0 ->
+int_send(TryNum,_APIKey,Prefix,From,To,Subject,Text,Html,Headers) when TryNum > 0 ->
 	URL = Prefix ++ "transmissions",
-	EncodedJson = make_json(From, To, Subject, Data, Headers),
+	EncodedJson = make_json(From, To, Subject, Text, Html, Headers),
 	Body = iolist_to_binary(EncodedJson),
     error_logger:info_msg("Sending: ~nAPI KEY: ~s~nURL: ~s~nMessage: ~s~n",[?API_KEY, URL, Body]),
 	case ibrowse:send_req(URL,[{authorization, ?API_KEY}],post,Body,[{content_type,"application/json"}]) of
-		{ok, _, _, Result} -> 
+		{ok, _, _, Result} ->
             error_logger:info_msg("Sent: ~p~n",[Result]),
 			do_nothing;
-		{error, Reason} -> 
+		{error, Reason} ->
 			error_logger:info_msg("Error In Send: ~p~n",[Reason])
 	end.
 
-int_send(Server,Port,From,To,Subject,Data,Headers) ->
-	int_send(5,Server,Port,From,To,Subject,Data,Headers).
+int_send(Server,Port,From,To,Subject,Text,Html,Headers) ->
+	int_send(5,Server,Port,From,To,Subject,Text,Html,Headers).
 
-make_json(From, To, Subject, Data, Headers) ->
+make_json(From, To, Subject, Text, Html, Headers) ->
     {_Headers2, ReplyTo} = extract_reply_to(Headers),
     ReplyToOption = case ReplyTo of
         undefined -> [];
         _ -> [{reply_to, i2b(ReplyTo)}]
     end,
+	HtmlOption = case Html of
+		[] -> [];
+		_ -> [{html, i2b(Html)}]
+	end,
     {FromName, FromEmail} = normalize_email_name(From),
     {ToName, ToEmail} = normalize_email_name(To),
 	Proplist = [
 		{content, [
-			{text, i2b(Data)},
+			{text, i2b(Text)},
 			{subject, i2b(Subject)},
             {from, [{email, i2b(FromEmail)}, {name, i2b(FromName)}]}
-        ] ++ ReplyToOption},
+        ] ++ ReplyToOption ++ HtmlOption},
         {recipients,[
             [{address, [{email,i2b(ToEmail)},{name,i2b(ToName)}]}]
         ]},
@@ -163,7 +172,7 @@ extract_reply_to(Headers) ->
             false -> {[{K,V}|HeaderAcc], ReplyTo}
         end
     end, {[], undefined}, Headers).
-        
+
 
 normalized_header(H) when is_atom(H) ->
     normalized_header(atom_to_list(H));
