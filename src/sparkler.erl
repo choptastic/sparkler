@@ -1,7 +1,9 @@
+%% vim: ts=4 sw=4 sts=4 et
+
 -module(sparkler).
 -behaviour(gen_server).
 
--compile(export_all).
+%-compile(export_all).
 
 -define(TIMEOUT,get_env(timeout, 300)).
 -define(API_KEY, get_env(api_key, "")).
@@ -22,7 +24,16 @@
 		]).
 
 
--export([send/4,send/5]).
+-export([
+    send_text/4,
+    send_text/5,
+    send_html/4,
+    send_html/5,
+    send/4,
+    send/5,
+    send/6
+]).
+
 -export([fix_floating_linefeeds/1]).
 
 -record(mail,{from,to,subject,text,html,headers}).
@@ -33,6 +44,18 @@ get_env(Key, Default) ->
 		undefined -> Default;
 		{ok, Val} -> Val
 	end.
+
+send_text(From, To, Subject, Text) ->
+    send_text(From, To, Subject, Text, []).
+
+send_text(From, To, Subject, Text, Headers) ->
+    send(From, To, Subject, Text, "", Headers).
+
+send_html(From, To, Subject, Html) ->
+    send_html(From, To, Subject, Html, []).
+
+send_html(From, To, Subject, Html, Headers) ->
+    send(From, To, Subject, "", Html, Headers).
 
 send(From,To,Subject,Text,Html,Headers) ->
 	Mail = #mail{
@@ -45,8 +68,10 @@ send(From,To,Subject,Text,Html,Headers) ->
 	},
 	gen_server:call(?MODULE,{queue,Mail}).
 
+%% kept for backwards compatibitlity only
 send(From,To,Subject,Text) ->
 	send(From,To,Subject,Text,[],[]).
+
 
 send(From,To,Subject,Text,Html) ->
 	send(From,To,Subject,Text,Html,[]).
