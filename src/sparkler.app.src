@@ -1,9 +1,10 @@
+%% vim: ft=erlang ts=4 sw=4 et sts=4
 {application, sparkler, [
     {description,  "Ultra-Minimal Sparkler API"},
     {vsn,          git},
     {applications, [kernel, stdlib, ibrowse, jsx]},
     {registered,   []},
-    {mod,          {sparkler_app, []}}
+    {mod,          {sparkler_app, []}},
 	{licenses,	   ["MIT"]},
 	{links, [{"GitHub", "https://github.com/choptastic/sparkler"}]}
 ]}.
