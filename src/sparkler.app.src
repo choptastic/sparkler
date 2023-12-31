@@ -1,6 +1,6 @@
 {application, sparkler, [
     {description,  "Ultra-Minimal Sparkler API"},
-    {vsn,          "0.1.1"},
+    {vsn,          git},
     {applications, [kernel, stdlib, ibrowse]},
     {registered,   []},
     {mod,          {sparkler_app, []}}

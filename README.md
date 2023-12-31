@@ -31,4 +31,4 @@ sparkler:send("from@email.com", "to@email.com", "subject", "this is the message"
 
 MIT LICENSE
 
-Copyright &copy; 2016 [Jesse Gumm](http://jessegumm.com) ([@jessegumm](http://twitter.com/jessegumm))
+Copyright &copy; 2016-2023 [Jesse Gumm](http://jessegumm.com) ([@jessegumm](http://twitter.com/jessegumm))
