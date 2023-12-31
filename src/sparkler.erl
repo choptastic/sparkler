@@ -123,8 +123,8 @@ handle_info(timeout,#data{queue=Queue} = Data) ->
             spawn(fun() ->
                 try
                     int_send(?API_KEY,?API_PREFIX,From,To,Subject,Text,Html,Headers)
-                catch E:T ->
-                    error_logger:error_msg("~p:~p~n~p~n",[E,T,erlang:get_stacktrace()])
+                catch E:T:S ->
+                    error_logger:error_msg("~p:~p~n~p~n",[E,T,S])
                 end
             end),
             NQ;
