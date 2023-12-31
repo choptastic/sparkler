@@ -1,7 +1,9 @@
 {application, sparkler, [
     {description,  "Ultra-Minimal Sparkler API"},
     {vsn,          git},
-    {applications, [kernel, stdlib, ibrowse]},
+    {applications, [kernel, stdlib, ibrowse, jsx]},
     {registered,   []},
     {mod,          {sparkler_app, []}}
+	{licenses,	   ["MIT"]},
+	{links, [{"GitHub", "https://github.com/choptastic/sparkler"}]}
 ]}.
